@@ -14,7 +14,7 @@ def s3open(*args, **kwargs):
 
 class S3File(object):
 
-    def __init__(self, url,mode, key=None, secret=None, expiration_days=0, private=False, content_type=None,content_encoding=None):
+    def __init__(self, url,mode='r', key=None, secret=None, expiration_days=0, private=False, content_type=None,content_encoding=None):
         from boto.s3.connection import S3Connection
         from boto.s3.key import Key
 
