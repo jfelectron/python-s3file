@@ -14,19 +14,21 @@ def s3open(*args, **kwargs):
 
 class S3File(object):
 
-    def __init__(self, url, key=None, secret=None, expiration_days=0, private=False, content_type=None, create=True):
+    def __init__(self, url,mode, key=None, secret=None, expiration_days=0, private=False, content_type=None,content_encoding=None):
         from boto.s3.connection import S3Connection
         from boto.s3.key import Key
 
         self.url = urlparse(url)
         self.expiration_days = expiration_days
         self.buffer = cStringIO.StringIO()
-
+        mode = mode if mode else 'r'
         self.private = private
         self.closed = False
         self._readreq = True
         self._writereq = False
-        self.content_type = content_type or mimetypes.guess_type(self.url.path)[0]
+        mime_type = mimetypes.guess_type(self.url.path)
+        self.content_type = content_type or mime_type[0]
+        self.content_encoding = content_encoding or mime_type[1]
 
         bucket = self.url.netloc
         if bucket.endswith('.s3.amazonaws.com'):
@@ -36,8 +38,11 @@ class S3File(object):
 
         self.name = "s3://" + bucket + self.url.path
 
-        if create:
-            self.bucket = self.client.create_bucket(bucket)
+        if mode =='w':
+            try:
+                self.bucket = self.client.create_bucket(bucket)
+            except:
+                 self.bucket = self.client.get_bucket(bucket, validate=False)
         else:
             self.bucket = self.client.get_bucket(bucket, validate=False)
 
@@ -74,6 +79,8 @@ class S3File(object):
 
             if self.content_type:
                 headers["Content-Type"] = self.content_type
+            if self.content_encoding:
+                 headers["Content-Type"] = self.content_encoding
 
             if self.expiration_days:
                 now = datetime.datetime.utcnow()
